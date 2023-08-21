@@ -6,7 +6,7 @@
 
 BOOL g_gameIsRunning;
 HWND g_gameWindow;
-GameBitmap g_drawingSurface;
+GameBitmap g_backBuffer;
 
 // SAL Annotations: https://learn.microsoft.com/en-us/cpp/c-runtime-library/sal-annotations?view=msvc-170
 
@@ -17,17 +17,17 @@ int WINAPI WinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prevInstance, _In
         return 1;
     }
 
-    g_drawingSurface.bitmapInfo.bmiHeader.biSize        = sizeof(g_drawingSurface.bitmapInfo.bmiHeader);
-    g_drawingSurface.bitmapInfo.bmiHeader.biWidth       = GAME_RES_WIDTH;
-    g_drawingSurface.bitmapInfo.bmiHeader.biHeight      = GAME_RES_HEIGHT;
-    g_drawingSurface.bitmapInfo.bmiHeader.biBitCount    = GAME_BITS_PER_PIXEL;
-    g_drawingSurface.bitmapInfo.bmiHeader.biCompression = BI_RGB; // 0 (no compression)
-    g_drawingSurface.bitmapInfo.bmiHeader.biPlanes      = 1;
+    g_backBuffer.bitmapInfo.bmiHeader.biSize        = sizeof(g_backBuffer.bitmapInfo.bmiHeader);
+    g_backBuffer.bitmapInfo.bmiHeader.biWidth       = GAME_RES_WIDTH;
+    g_backBuffer.bitmapInfo.bmiHeader.biHeight      = GAME_RES_HEIGHT;
+    g_backBuffer.bitmapInfo.bmiHeader.biBitCount    = GAME_BITS_PER_PIXEL;
+    g_backBuffer.bitmapInfo.bmiHeader.biCompression = BI_RGB; // 0 (no compression)
+    g_backBuffer.bitmapInfo.bmiHeader.biPlanes      = 1;
 
-    g_drawingSurface.canvas = VirtualAlloc(NULL, GAME_CANVAS_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    g_backBuffer.canvas = VirtualAlloc(NULL, GAME_CANVAS_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 
-    if (g_drawingSurface.canvas == NULL) {
-        MessageBoxA(NULL, "Failed to allocate memory for drawing surface!", "Error", MB_ICONEXCLAMATION | MB_OK);
+    if (g_backBuffer.canvas == NULL) {
+        MessageBoxA(NULL, "Failed to allocate memory for the backbuffer!", "Error", MB_ICONEXCLAMATION | MB_OK);
         return 1;
     }
 
@@ -43,7 +43,6 @@ int WINAPI WinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prevInstance, _In
 
         HandlePlayerInput();
         RenderFrameGraphics();
-        // handle frame graphics
 
         Sleep(1); // revisit this one day
     }
@@ -84,7 +83,7 @@ void CreateMainGameWindowOrQuit(void)
     windowClass.hInstance = instance;
     windowClass.hIcon = LoadIconA(NULL, IDI_APPLICATION);
     windowClass.hCursor = LoadCursorA(NULL, IDC_ARROW);
-    windowClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    windowClass.hbrBackground = CreateSolidBrush(RGB(255, 0, 255));
     windowClass.lpszMenuName = GAME_NAME "MenuName";
     windowClass.lpszClassName = GAME_NAME "WindowClassName";
     windowClass.hIconSm = LoadIconA(NULL, IDI_APPLICATION);
@@ -123,5 +122,15 @@ void HandlePlayerInput()
 
 void RenderFrameGraphics(void)
 {
+    HDC deviceContext = GetDC(g_gameWindow);
 
+    StretchDIBits(
+        deviceContext,
+        0, 0, 100, 100,
+        0, 0, 100, 100,
+        g_backBuffer.canvas, &g_backBuffer.bitmapInfo,
+        DIB_RGB_COLORS, SRCCOPY
+    ); // move data from g_backBuffer.canvas to the deviceContext, streching or compressing if necessary
+
+    ReleaseDC(g_gameWindow, deviceContext);
 }

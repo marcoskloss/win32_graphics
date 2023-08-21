@@ -2,8 +2,8 @@
 
 #define GAME_NAME "Game_B"
 
-#define GAME_RES_WIDTH      384
-#define GAME_RES_HEIGHT     216
+#define GAME_RES_WIDTH      400
+#define GAME_RES_HEIGHT     240
 #define GAME_BITS_PER_PIXEL 32
 #define GAME_CANVAS_SIZE   (GAME_RES_WIDTH * GAME_RES_HEIGHT * (GAME_BITS_PER_PIXEL / 8))
 
