@@ -26,7 +26,7 @@ int WINAPI WinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prevInstance, _In
 
     g_backBuffer.canvas = VirtualAlloc(NULL, GAME_CANVAS_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 
-    if (g_backBuffer.canvas == NULL) {
+    if (!g_backBuffer.canvas) {
         MessageBoxA(NULL, "Failed to allocate memory for the backbuffer!", "Error", MB_ICONEXCLAMATION | MB_OK);
         return 1;
     }
@@ -70,16 +70,13 @@ LRESULT CALLBACK MainWindowProc(HWND windowHandle, UINT message, WPARAM wParam, 
     return 0;
 }
 
-void CreateMainGameWindowOrQuit(void)
+void CreateMainGameWindowOrQuit()
 {
     WNDCLASSEXA windowClass = { 0 };
     HINSTANCE instance = GetModuleHandleA(NULL);
 
     windowClass.cbSize = sizeof(WNDCLASSEXA);
-    windowClass.style = 0;
     windowClass.lpfnWndProc = MainWindowProc;
-    windowClass.cbClsExtra = 0;
-    windowClass.cbWndExtra = 0;
     windowClass.hInstance = instance;
     windowClass.hIcon = LoadIconA(NULL, IDI_APPLICATION);
     windowClass.hCursor = LoadCursorA(NULL, IDC_ARROW);
@@ -88,7 +85,7 @@ void CreateMainGameWindowOrQuit(void)
     windowClass.lpszClassName = GAME_NAME "WindowClassName";
     windowClass.hIconSm = LoadIconA(NULL, IDI_APPLICATION);
 
-    if (RegisterClassExA(&windowClass) == 0) {
+    if (!RegisterClassExA(&windowClass)) {
         MessageBoxA(NULL, "Failed to Register Window!", "Error", MB_ICONEXCLAMATION | MB_OK);
         exit(1);
     }
@@ -99,13 +96,13 @@ void CreateMainGameWindowOrQuit(void)
         640, 480, NULL, NULL,
         instance, NULL);
 
-    if (g_gameWindow == NULL) {
+    if (!g_gameWindow) {
         MessageBoxA(NULL, "Failed to Create Window!", "Error", MB_ICONEXCLAMATION | MB_OK);
         exit(1);
     }
 }
 
-BOOL GameIsAlreadyRunning(void)
+BOOL GameIsAlreadyRunning()
 {
     HANDLE mutex = CreateMutexA(NULL, FALSE, GAME_NAME "Mutex");
     return GetLastError() == ERROR_ALREADY_EXISTS;
@@ -120,7 +117,7 @@ void HandlePlayerInput()
     }
 }
 
-void RenderFrameGraphics(void)
+void RenderFrameGraphics()
 {
     HDC deviceContext = GetDC(g_gameWindow);
 

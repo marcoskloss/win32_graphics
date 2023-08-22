@@ -13,7 +13,7 @@ typedef struct GameBitmap {
 } GameBitmap;
 
 LRESULT CALLBACK MainWindowProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam);
-void CreateMainGameWindowOrQuit(void);
-BOOL GameIsAlreadyRunning(void);
-void HandlePlayerInput(void);
-void RenderFrameGraphics(void);
+void CreateMainGameWindowOrQuit();
+BOOL GameIsAlreadyRunning();
+void HandlePlayerInput();
+void RenderFrameGraphics();
