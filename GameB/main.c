@@ -7,6 +7,8 @@
 BOOL g_gameIsRunning;
 HWND g_gameWindow;
 GameBitmap g_backBuffer;
+int g_monitorWidth;
+int g_monitorHeight;
 
 // SAL Annotations: https://learn.microsoft.com/en-us/cpp/c-runtime-library/sal-annotations?view=msvc-170
 
@@ -16,6 +18,30 @@ int WINAPI WinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prevInstance, _In
         MessageBoxA(NULL, "Another instance of the game is already running!", "Error", MB_ICONEXCLAMATION | MB_OK);
         return 1;
     }
+
+    CreateMainGameWindowOrQuit();
+
+    MONITORINFO monitorInfo = { .cbSize = sizeof(MONITORINFO) };
+
+    HMONITOR monitor = MonitorFromWindow(g_gameWindow, MONITOR_DEFAULTTOPRIMARY);
+    
+    if (
+        !GetMonitorInfoA( monitor, &monitorInfo)
+     ) {
+        MessageBoxA(NULL, "Failed to find the monitor info", "Error", MB_ICONEXCLAMATION | MB_OK);
+        return 1;
+    }
+
+    SetWindowLongPtrA(g_gameWindow, GWL_STYLE, (WS_OVERLAPPEDWINDOW | WS_VISIBLE) & ~WS_OVERLAPPEDWINDOW);
+
+    g_monitorWidth  = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
+    g_monitorHeight = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
+
+    SetWindowPos(g_gameWindow, 
+                 HWND_TOPMOST, 
+                 monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top,
+                 g_monitorWidth, g_monitorHeight, 
+                 SWP_FRAMECHANGED);
 
     g_backBuffer.bitmapInfo.bmiHeader.biSize        = sizeof(g_backBuffer.bitmapInfo.bmiHeader);
     g_backBuffer.bitmapInfo.bmiHeader.biWidth       = GAME_RES_WIDTH;
@@ -31,7 +57,7 @@ int WINAPI WinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prevInstance, _In
         return 1;
     }
 
-    CreateMainGameWindowOrQuit();
+    memset(g_backBuffer.canvas, 0xFF, GAME_CANVAS_SIZE);
 
     MSG message = { 0 };
     g_gameIsRunning = TRUE;
@@ -119,12 +145,21 @@ void HandlePlayerInput()
 
 void RenderFrameGraphics()
 {
+    Pixel32 p;
+    p.r = 0;
+    p.g = 0;
+    p.b = 255;
+    p.a = 255;
+
+    for (int i = 0; i < (GAME_CANVAS_SIZE / sizeof(Pixel32) / 2); i++)
+        memcpy((Pixel32*) g_backBuffer.canvas + i, &p, sizeof(Pixel32));
+
     HDC deviceContext = GetDC(g_gameWindow);
 
     StretchDIBits(
         deviceContext,
-        0, 0, 100, 100,
-        0, 0, 100, 100,
+        0, 0, g_monitorWidth, g_monitorHeight,
+        0, 0, GAME_RES_WIDTH, GAME_RES_HEIGHT,
         g_backBuffer.canvas, &g_backBuffer.bitmapInfo,
         DIB_RGB_COLORS, SRCCOPY
     ); // move data from g_backBuffer.canvas to the deviceContext, streching or compressing if necessary
